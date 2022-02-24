@@ -1,24 +1,26 @@
-import logo from './logo.svg';
+
 import './App.css';
+import TableSection from './Component/TableSection';
+import styled from 'styled-components'
+
+const Main = styled.div`
+  padding: 15px;
+  font-family: "Open Sans", sans-serif;
+`
+const MainHeading = styled.h1`
+  text-align: center;
+  font-size: 3.2rem;
+  margin: 20px 0 60px 0;
+`
 
 function App() {
+  
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <Main>
+      <MainHeading>Reusable React Table Component</MainHeading>
+      <TableSection Title='transactions' />
+      <TableSection Title='holdings' />
+    </Main>
   );
 }
 
