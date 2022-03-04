@@ -80,6 +80,9 @@ function TableSection({ Title }) {
         [Title]
     )
     const data = useFetch(Title)
+    
+
+    console.log("9540675534")
     return (
         <div>
             <TableHeading>Table with {Title} Data</TableHeading>

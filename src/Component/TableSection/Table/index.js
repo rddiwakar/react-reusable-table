@@ -1,8 +1,16 @@
-import { useTable, usePagination, useSortBy } from "react-table";
-import { DndProvider, useDrag, useDrop } from 'react-dnd'
-import {HTML5Backend }from 'react-dnd-html5-backend'
-import update from 'immutability-helper'
 import React from 'react';
+import {
+  useTable,
+  useSortBy,
+  usePagination,
+  useFlexLayout,
+  useResizeColumns,
+  useColumnOrder
+} from "react-table";
+
+import DndColumn from "./DndColumn";
+import { DndProvider } from "react-dnd";
+import { HTML5Backend } from "react-dnd-html5-backend";
 import styled from 'styled-components';
 
 const TableWrapper = styled.div`
@@ -19,6 +27,7 @@ const TableMain = styled.table`
   max-width: 100rem;
   border-collapse: collapse;
   tr {
+    word-break: break-all;
     background: #fff;
     text-align: center;
     height: 60px;
@@ -40,136 +49,113 @@ const TableMain = styled.table`
       color: #fff;
       font-weight: 400;
       height: 70px;
+      
     }
   }
 `
 
-function Table({ columns, data }) {
-  // Use the state and functions returned from useTable to build your UI
-
-  const [records, setRecords] = React.useState(data)
-
-  const getRowId = React.useCallback(row => {
-    return row.id
-  }, [])
+export default function Table({ data, columns }) {
   const {
     getTableProps,
     getTableBodyProps,
     headerGroups,
-    prepareRow,
-    // Row,
     page,
+    prepareRow,
+
+    previousPage,
+    nextPage,
     canPreviousPage,
     canNextPage,
-    pageOptions,
     pageCount,
     gotoPage,
-    nextPage,
-    previousPage,
-    setPageSize,
-    state: { pageIndex, pageSize },
+    visibleColumns,
+    setColumnOrder,
+    state: { pageIndex }
+  } = useTable(
+    { columns, data, initialState: { pageIndex: 0 } },
+    useSortBy,
+    usePagination,
+    useFlexLayout,
+    useResizeColumns,
+    useColumnOrder
+  );
 
-  } = useTable({
-    columns,
-    data: records,
-    getRowId,
-    initialState: { pageIndex: 0 },
-  }, useSortBy, usePagination)
+  const formatCellValue = cell => {
+    const cellValue = cell.render("Cell").props.value;
+      return cellValue;
+   
+   };
 
-  const moveRow = (dragIndex, hoverIndex) => {
-    const dragRecord = records[dragIndex]
-    setRecords(
-      update(records, {
-        $splice: [
-          [dragIndex, 1],
-          [hoverIndex, 0, dragRecord],
-        ],
-      })
-    )
-  }
-  // Render the UI for your table
+  const moveColumn = (dragIndex, dropIndex) => {
+    const newColumnOrder = [...visibleColumns];
+
+    [newColumnOrder[dragIndex], newColumnOrder[dropIndex]] = [
+      newColumnOrder[dropIndex],
+      newColumnOrder[dragIndex]
+    ];
+
+    console.log(visibleColumns);
+    setColumnOrder(newColumnOrder.map(col => col.id));
+  };
+
   return (
     <DndProvider backend={HTML5Backend}>
       <TableWrapper>
         <TableMain {...getTableProps()}>
           <thead className="thead">
-            {headerGroups.map(headerGroup => (
-              <tr className="tr" {...headerGroup.getHeaderGroupProps()}>
-                {headerGroup.headers.map(column => (
-                  <th {...column.getHeaderProps(column.getSortByToggleProps())}>
-                    {column.render('Header')}
-                    <span>{
-                      column.isSorted
-                        ? column.isSortedDesc
-                          ? <> &#x21d3; </>
-                          : <> &#x21d1; </>
-                        : <> &#x21d5; </>
-                    }
-                    </span>
-                  </th>
-                ))}
-              </tr>
-            ))}
+            <tr className="tr" {...headerGroups[0].getHeaderGroupProps()}>
+              {headerGroups[0].headers.map((column, idx) => (
+                <DndColumn
+                  key={column.id}
+                  column={column}
+                  index={idx}
+                  moveColumn={moveColumn}
+                />
+              ))}
+            </tr>
           </thead>
+
           <tbody className="tbody" {...getTableBodyProps()}>
-            {page.map((row, i) => {
-              prepareRow(row)
+            {page.map(row => {
+              prepareRow(row);
               return (
                 <tr className="tr" {...row.getRowProps()}>
                   {row.cells.map(cell => {
-                    return <td className="td" {...cell.getCellProps()}>{cell.render('Cell')}</td>
+                    return (
+                      <td className="td" {...cell.getCellProps()}>
+                        {formatCellValue(cell)}
+                      </td>
+                    );
                   })}
                 </tr>
-              )
+              );
             })}
           </tbody>
         </TableMain>
-        <div className="pagination">
-          <button onClick={() => gotoPage(0)} disabled={!canPreviousPage}>
-            {'First <<'}
-          </button>{' '}
+
+        <div className="table__pagination">
           <button onClick={() => previousPage()} disabled={!canPreviousPage}>
-            {'Prev <'}
-          </button>{' '}
+            &#x21d0; Back
+          </button>
+          {Array.from(Array(pageCount).keys()).map(page => {
+            return (
+              <button
+                key={page}
+                onClick={() => gotoPage(page)}
+                style={{
+                  background: `${pageIndex === page ? "#7180bf" : ""}`,
+                  color: `${pageIndex === page ? "#fff" : ""}`
+                }}
+              >
+                {page + 1}
+              </button>
+            );
+          })}
           <button onClick={() => nextPage()} disabled={!canNextPage}>
-            {'Next >'}
-          </button>{' '}
-          <button onClick={() => gotoPage(pageCount - 1)} disabled={!canNextPage}>
-            {'Last >>'}
-          </button>{' '}
-          <span>
-            Page{' '}
-            <strong>
-              {pageIndex + 1} of {pageOptions.length}
-            </strong>{' '}
-          </span>
-          <span>
-            | Go to page:{' '}
-            <input
-              type="number"
-              defaultValue={pageIndex + 1}
-              onChange={e => {
-                const page = e.target.value ? Number(e.target.value) - 1 : 0
-                gotoPage(page)
-              }}
-              style={{ width: '100px' }}
-            />
-          </span>{' '}
-          <select
-            value={pageSize}
-            onChange={e => {
-              setPageSize(Number(e.target.value))
-            }}
-          >
-            {[5, 10, 20, 30, 40, 50].map(pageSize => (
-              <option key={pageSize} value={pageSize}>
-                Show {pageSize}
-              </option>
-            ))}
-          </select>
+            Next &#x21d2;
+          </button>
         </div>
       </TableWrapper>
     </DndProvider>
-  )
+  );
 }
-export default Table
