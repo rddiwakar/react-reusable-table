@@ -66,7 +66,7 @@ function TableSection({ Title }) {
                             accessor: 'market_price'
                         },
                         {
-                            Header: 'Change Percentage',
+                            Header: 'Change %',
                             accessor: 'latest_chg_pct'
                         },
                         {
