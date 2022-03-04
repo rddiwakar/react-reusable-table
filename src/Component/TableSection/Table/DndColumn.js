@@ -1,4 +1,14 @@
 import { useDrag, useDrop } from "react-dnd";
+import styled from 'styled-components'
+
+const Column = styled.th `
+    padding: 5px;
+    border-left: 1px solid rgba(255, 255, 255, 0.4);
+    border-right: 1px solid rgba(255, 255, 255, 0.4);
+    display:flex;
+    justify-content:space-around;
+    align-items:center;
+`
 
 const DND_ITEM_TYPE = "column";
 
@@ -19,7 +29,7 @@ const DndColumn = ({ column, index, moveColumn }) => {
   const opacity = isDragging ? 0 : 1;
 
   return (
-    <th
+    <Column
       ref={drop}
       className="th"
       {...column.getHeaderProps(column.getSortByToggleProps(), {
@@ -46,7 +56,7 @@ const DndColumn = ({ column, index, moveColumn }) => {
         {...column.getResizerProps()}
         className={`th__resizer ${column.isResizing ? "th__isResizing" : ""}`}
       />
-    </th>
+    </Column>
   );
 };
 
